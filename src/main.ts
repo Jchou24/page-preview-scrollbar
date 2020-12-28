@@ -1,8 +1,14 @@
 import Vue from 'vue'
 import App from './App.vue'
+import VueCompositionAPI from '@vue/composition-api'
+
+import 'material-design-icons/iconfont/material-icons.css'
+import 'animate.css/animate.min.css'
 
 Vue.config.productionTip = false
 
+Vue.use(VueCompositionAPI)
+
 new Vue({
-  render: h => h(App),
+    render: h => h(App),
 }).$mount('#app')
