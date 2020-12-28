@@ -1,6 +1,6 @@
 {
   "name": "jctk-page-preview-scrollbar",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "main": "dist/jctk-page-preview-scrollbar.common.js",
   "scripts": {
     "serve": "vue-cli-service serve",
@@ -20,10 +20,12 @@
     "demo/*"
   ],
   "dependencies": {
-    "@vue/composition-api": "^1.0.0-beta.22",
     "core-js": "^3.6.5",
     "vue": "^2.6.11",
     "vuex": "^3.6.0"
+  },
+  "peerDependencies": {
+    "@vue/composition-api": "^1.0.0-beta.22"
   },
   "devDependencies": {
     "@types/jquery": "^3.5.5",

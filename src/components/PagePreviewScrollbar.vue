@@ -4,7 +4,7 @@
         @mouseleave="HandleMouseLeave"
         >
         <SimpleTransition enterAnimation="animate__fadeInRight" leaveAnimation="animate__fadeOutRight" >
-            <div class="scroll-bar" v-show="isActive">
+            <div class="page-preview-scroll-bar" v-show="isActive">
                 <div class="top-block" />
 
                 <Previewer class="Previewer"
@@ -196,7 +196,7 @@
             background: white;
         }
 
-        .scroll-bar{
+        .page-preview-scroll-bar{
             position: relative;
             border-left: 3px solid whitesmoke;
             opacity: 0.6;
