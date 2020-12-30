@@ -4,14 +4,14 @@
 
         <div class="head" />
 
-        <v-card class="tool-bar" elevation="6">
+        <v-card class="tool-bar pb-4" elevation="6">
             <v-card-title class="text-center text-h5">
                 Scrollbar Settings
             </v-card-title>
 
             <v-divider />
 
-            <v-card-text>
+            <v-card-text class="pb-0">
                 <v-container>
                     <v-row class="mb-6">
                         <v-btn block rounded @click="AddIcon">
@@ -38,6 +38,9 @@
                         <v-btn block rounded :color="GetColor(isAutoOpacity)" @click="isAutoOpacity = !isAutoOpacity">
                             Toggle isAutoOpacity <v-spacer /> {{isAutoOpacity}}
                         </v-btn>
+                        <v-btn block rounded :color="GetColor(disableRepaint)" @click="disableRepaint = !disableRepaint">
+                            Toggle disableRepaint <v-spacer /> {{disableRepaint}}
+                        </v-btn>
                         <v-btn block rounded :color="GetColor(isShowBrowserScrollbar)" @click="isShowBrowserScrollbar = !isShowBrowserScrollbar">
                             Toggle isShowBrowserScrollbar <v-spacer /> {{isShowBrowserScrollbar}}
                         </v-btn>
@@ -48,7 +51,7 @@
                         <v-divider class="" />
                     </v-row>
 
-                    <v-row class="mb-6 text-h6">
+                    <v-row class="mb-6 text-h6 text-center">
                         Paint specific target
                     </v-row>
 
@@ -78,7 +81,7 @@
                         <v-divider class="" />
                     </v-row>
 
-                    <v-row class="mb-6 text-h6">
+                    <v-row class="mb-6 text-h6 text-center">
                         Adjust scrollbar position, height
                     </v-row>
 
@@ -121,6 +124,7 @@
             :isShowCloseButton="isShowCloseButton"
             :isHideShorterHeight="isHideShorterHeight"
             :isAutoOpacity="isAutoOpacity"
+            :disableRepaint="disableRepaint"
             :persist="persist" 
             :targetSelector="targetSelector"
             :paintOption="option"
@@ -170,6 +174,7 @@
             const isHideShorterHeight = ref(true)
             const isShowCloseButton = ref(true)
             const isAutoOpacity = ref(true)
+            const disableRepaint = ref(false)
             const persist = ref(true)
             const targetSelector = ref("html")
 
@@ -239,6 +244,7 @@
                 isShowCloseButton,
                 isShowBrowserScrollbar,
                 isAutoOpacity,
+                disableRepaint,
                 isScrollbarAlignTop,
                 persist,
                 targetSelector,
@@ -325,6 +331,27 @@
         left: 60px;
         width: 400px;
         border-radius: 15px !important;
+
+        .v-card__text{
+            max-height: 610px;
+            overflow: auto;
+
+            &::-webkit-scrollbar
+            {
+                width: 10px;
+            }
+
+            &::-webkit-scrollbar-thumb
+            {
+                border-radius: 10px;
+                -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+                background-color: #d8d8d8;
+
+                &:hover{
+                    background-color: #ecebeb;
+                }
+            }
+        }
 
         .text-center{
             display: flex;

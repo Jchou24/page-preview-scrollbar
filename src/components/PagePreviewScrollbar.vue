@@ -67,6 +67,10 @@
                 type: Number,
                 default: 100,
             },
+            disableRepaint:{
+                type: Boolean,
+                default: false
+            },
 
             previewerId:{
                 type: String,
@@ -82,7 +86,7 @@
             },
             debounceRepaint:{
                 type: Number,
-                default: 500,
+                default: 1000,
             },
             paintOption:{
                 type: Object as () => htmlToImage.Options,
@@ -109,16 +113,27 @@
                     : true
             }))
 
-            const ResetPreviewer = () => (refs.Previewer as IPagePreviewScrollbarMethods)?.Reset();
-            const ResetPreviewScroller = () => (refs.PreviewScroller as IPagePreviewScrollbarMethods)?.Reset();
+            const ResetPreviewer = () => {
+                // console.log( "ResetPreviewer" )
+                if (props.disableRepaint) {
+                    return
+                }
+                (refs.Previewer as IPagePreviewScrollbarMethods)?.Reset();
+            }
+            const ResetPreviewScroller = () => {
+                (refs.PreviewScroller as IPagePreviewScrollbarMethods)?.Reset();
+            }
 
             const DebounceResetPreviewer = debounce( ResetPreviewer, props.debounceRepaint )
             const ThrottleResetPreviewScroller = throttle( ResetPreviewScroller, props.throttle )
 
 
             const Reset = () => {
+                // console.log("reset")
                 DebounceResetPreviewer()
                 ThrottleResetPreviewScroller()
+                // ResetPreviewer()
+                // ResetPreviewScroller()
             }
 
             watch( isActive, () => {
@@ -147,22 +162,23 @@
                 }
             }
 
-            let isUpdated = false
+            const isUpdated = ref(false)
             function HandleResize() {
-                // console.log("Resize change")
+                // console.log("Resize change", isUpdated.value)
                 // console.log(ShouldActive())
 
-                if (!isUpdated) {
+                if (!isUpdated.value) {
+                    isUpdated.value = true
                     return
                 }
-
+                // console.log("HandleResize call reset")
                 Reset()
                 isActive.value = ShouldActive()
             }
-            onUpdated( () => isUpdated = true)
 
             function InitResizeObserver() {
-                const resizeObserver = new ResizeObserver(throttle(HandleResize, props.throttle));
+                // console.log( "init InitResizeObserver" )
+                const resizeObserver = new ResizeObserver(debounce(HandleResize, props.debounceRepaint));
                 const target = document.querySelector(props.targetSelector)
                 if (!target) {
                     return
@@ -175,8 +191,9 @@
                 InitResizeObserver()
 
                 nextTick(Reset)
+                // nextTick(InitResizeObserver)
 
-                $(window).on('scroll', throttle( ResetPreviewScroller, props.throttle) )
+                $(window).on('scroll', ThrottleResetPreviewScroller )
             })
             // =================================================================
             watch( () => props.persist, () => isActive.value = props.persist )
@@ -216,6 +233,7 @@
                 GetStyle,
                 GetClass,
                 Reset,
+                ResetScroller: ResetPreviewScroller,
                 HandleMouseEnter,
                 HandleMouseLeave,
                 HandleClose,

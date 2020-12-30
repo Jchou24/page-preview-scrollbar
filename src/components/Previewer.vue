@@ -50,6 +50,7 @@
                 }   
 
                 return {
+                    cacheBust: true,
                     ...props.paintOption,
                     filter: mixedFilter,
                 } as htmlToImage.Options
