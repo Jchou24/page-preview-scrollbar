@@ -1,60 +1,114 @@
 <template>
-    <div id="app">
-        <div class="head">
-            <div class="btns">
-                <div>
-                    <button @click="AddIcon">
-                        Add Vue Icon
-                    </button>
-                    <button @click="RemoveIcon">
-                        Remove Vue Icon
-                    </button>
-                    <button @click="ResetScrollbar">
-                        Update scrollbar
-                    </button>
-                </div>
+    <v-app>
+        <GitHubCorner repo="https://github.com/Jchou24/page-preview-scrollbar" position="left" />
 
-                <div>
-                    <button @click="isHideShorterHeight = !isHideShorterHeight">
-                        Hide / Show when screen height is short
-                    </button>
-                    <button @click="isShowCloseButton = !isShowCloseButton">
-                        Hide / Show close button
-                    </button>
-                    <button @click="persist = !persist">
-                        Active / Inactive persist
-                    </button>
-                    <button @click="isShowBrowserScrollbar = !isShowBrowserScrollbar">
-                        Hide / Show browser scrollbar
-                    </button>
-                </div>
+        <div class="head" />
 
-                <div>
-                    <span>
-                        isHideShorterHeight: {{isHideShorterHeight}} |
-                    </span>
-                    <span>
-                        isShowCloseButton: {{isShowCloseButton}} |
-                    </span>
-                    <span>
-                        persist: {{persist}}
-                    </span>
-                </div>
+        <v-card class="tool-bar" elevation="6">
+            <v-card-title class="text-center text-h5">
+                Scrollbar Settings
+            </v-card-title>
 
-                <div>
-                    <button @click="PaintHtml" >
-                        Paint html
-                    </button>
-                    <button @click="PaintApp" >
-                        Paint #app
-                    </button>
-                    <button @click="PaintImage" >
-                        Paint .images
-                    </button>
-                    <input v-model="targetSelector">
-                </div>
-            </div>
-        </div>
+            <v-divider />
+
+            <v-card-text>
+                <v-container>
+                    <v-row class="mb-6">
+                        <v-btn block rounded @click="AddIcon">
+                            Add Vue Icon
+                        </v-btn>
+                        <v-btn block rounded @click="RemoveIcon">
+                            Remove Vue Icon
+                        </v-btn>
+                        <v-btn block rounded @click="ResetScrollbar">
+                            Update scrollbar
+                        </v-btn>
+                    </v-row>
+
+                    <v-row class="mb-6">
+                        <v-btn block rounded :color="GetColor(isHideShorterHeight)" @click="isHideShorterHeight = !isHideShorterHeight">
+                            Toggle isHideShorterHeight <v-spacer /> {{isHideShorterHeight}}
+                        </v-btn>
+                        <v-btn block rounded :color="GetColor(isShowCloseButton)" @click="isShowCloseButton = !isShowCloseButton">
+                            Toggle isShowCloseButton <v-spacer /> {{isShowCloseButton}}
+                        </v-btn>
+                        <v-btn block rounded :color="GetColor(persist)" @click="persist = !persist">
+                            Toggle persist <v-spacer /> {{persist}}
+                        </v-btn>
+                        <v-btn block rounded :color="GetColor(isAutoOpacity)" @click="isAutoOpacity = !isAutoOpacity">
+                            Toggle isAutoOpacity <v-spacer /> {{isAutoOpacity}}
+                        </v-btn>
+                        <v-btn block rounded :color="GetColor(isShowBrowserScrollbar)" @click="isShowBrowserScrollbar = !isShowBrowserScrollbar">
+                            Toggle isShowBrowserScrollbar <v-spacer /> {{isShowBrowserScrollbar}}
+                        </v-btn>
+                    </v-row>
+
+                    <!-- ---------------------------------------------------------------------------------------- -->
+                    <v-row class="mb-5">
+                        <v-divider class="" />
+                    </v-row>
+
+                    <v-row class="mb-6 text-h6">
+                        Paint specific target
+                    </v-row>
+
+                    <v-row class="mb-5">
+                        <v-btn class="px-8" rounded :color="GetColor2(targetSelector === 'html')" @click="PaintHtml" >
+                            html
+                        </v-btn>
+                        <v-btn class="px-8 mx-3" rounded :color="GetColor2(targetSelector === '#app')" @click="PaintApp" >
+                            #app
+                        </v-btn>
+                        <v-btn class="px-8" rounded :color="GetColor2(targetSelector === '.images')" @click="PaintImage" >
+                            .images
+                        </v-btn>
+                    </v-row>
+
+                    <v-row>
+                        <v-text-field class="mx-1"
+                            v-model="targetSelector"
+                            label="targetSelector"
+                            outlined
+                            rounded
+                            dense
+                        />
+                    </v-row>
+                    <!-- ---------------------------------------------------------------------------------------- -->
+                    <v-row class="mb-5">
+                        <v-divider class="" />
+                    </v-row>
+
+                    <v-row class="mb-6 text-h6">
+                        Adjust scrollbar position, height
+                    </v-row>
+
+                    <v-row class="mb-5">
+                        <v-btn class="px-8" rounded :color="GetColor2(isScrollbarAlignTop)" @click="isScrollbarAlignTop = true" >
+                            Align Top
+                        </v-btn>
+                        <v-btn class="px-8 mx-3" rounded :color="GetColor2(!isScrollbarAlignTop)" @click="isScrollbarAlignTop = false" >
+                            Align Bottom
+                        </v-btn>
+                    </v-row>
+
+                    <v-row>
+                        <v-slider class="mx-2"
+                            v-model="scrollbarHeightPercent"
+                            :min="0"
+                            :man="100"
+                            append-icon="mdi-plus-circle-outline"
+                            prepend-icon="mdi-minus-circle-outline"
+                            @click:append="IncrementScrollbarHeight"
+                            @click:prepend="DecrementScrollbarHeight"
+                        />
+                    </v-row>
+                    <!-- ---------------------------------------------------------------------------------------- -->
+                </v-container>
+
+            </v-card-text>
+        </v-card>
+
+
         <div class="images" >
             <div class="row" v-for="(item, idx) in images"
                 :key="idx" >
@@ -63,9 +117,10 @@
             </div>
         </div>
         
-        <PagePreviewScrollbar class="PagePreviewScrollbar"
+        <PagePreviewScrollbar class="PagePreviewScrollbar" :style="GetSCrollbarStyle"
             :isShowCloseButton="isShowCloseButton"
-            :isHideShorterHeight="isHideShorterHeight" 
+            :isHideShorterHeight="isHideShorterHeight"
+            :isAutoOpacity="isAutoOpacity"
             :persist="persist" 
             :targetSelector="targetSelector"
             :paintOption="option"
@@ -74,31 +129,47 @@
             @active="HandleActive"
             @inactive="HandleInActive"
             ref="scrollbar" />
-    </div>
+    </v-app>
 </template>
 
 <script lang="ts">
-    import { defineComponent, ref, watch } from '@vue/composition-api'
+    import { computed, defineComponent, ref, watch } from '@vue/composition-api'
     
+    import GitHubCorner from './GitHubCorner.vue'
     import PagePreviewScrollbar from './components/PagePreviewScrollbar.vue'
 
     import { IPagePreviewScrollbarMethods } from './types'
     import * as htmlToImage from 'html-to-image'
+    import { useWindowSize } from '@u3u/vue-hooks'
+    import debounce from 'lodash.debounce'
+    import { provideToast, useToast } from "vue-toastification/composition";
+    import "vue-toastification/dist/index.css";
 
     export default defineComponent({
         name: 'App',
         components: {
+            GitHubCorner,
             PagePreviewScrollbar
         },
         setup( props, { refs }){
+            provideToast({ 
+                toastClassName: "toast-notification",
+                transition: "Vue-Toastification__fade",
+                draggable: false,
+                timeout: 3000
+            })
+            const toast = useToast()
+            const { width, height } = useWindowSize()
+            
             const option = ref({} as htmlToImage.Options)
-            const images = ref(new Array(10).fill(0))
+            const images = ref(new Array(15).fill(0))
             const AddIcon = () => images.value.push(0)
             const RemoveIcon = () => images.value.pop()
 
             const isShowBrowserScrollbar = ref(false)
             const isHideShorterHeight = ref(true)
             const isShowCloseButton = ref(true)
+            const isAutoOpacity = ref(true)
             const persist = ref(true)
             const targetSelector = ref("html")
 
@@ -110,6 +181,14 @@
                     html?.classList.remove('show-scrollbar')
                 }
             })
+
+            function GetColor(isTrue: boolean){
+                return isTrue ? "teal lighten-4" : 'deep-purple lighten-4'
+            }
+
+            function GetColor2(isTrue: boolean){
+                return isTrue ? "teal lighten-4" : ''
+            }
 
             function ResetScrollbar(){
                 (refs.scrollbar as IPagePreviewScrollbarMethods)?.Reset();
@@ -127,30 +206,51 @@
                 targetSelector.value = '.images'
             }
 
-            function HandleRepainted() {
-                console.log("Repainted")
+            function HandleRepainted(){
+                toast.success("Repainted")
             }
 
-            function HandleActive() {
-                console.log("Active")
+            function HandleActive(){
+                toast.success("Active")
             }
 
-            function HandleInActive() {
-                console.log("InActive")
+            function HandleInActive(){
+                toast.success("InActive")
             }
+
+            // =================================================================
+
+            const scrollbarHeightPercent = ref(100.0)
+            const isScrollbarAlignTop = ref(true)
+
+            const DecrementScrollbarHeight = () => scrollbarHeightPercent.value -= 5
+            const IncrementScrollbarHeight = () => scrollbarHeightPercent.value += 5
+
+            const GetSCrollbarStyle = computed( () => ({
+                height: `${height.value * (scrollbarHeightPercent.value / 100.0)}px !important`,
+                top: `${isScrollbarAlignTop.value ? "0" : "unset"} !important`,
+                bottom: `${!isScrollbarAlignTop.value ? "0" : "unset"} !important`,
+            }))
+
+            watch( scrollbarHeightPercent, debounce(ResetScrollbar, 300) )
 
             return {
                 isHideShorterHeight,
                 isShowCloseButton,
                 isShowBrowserScrollbar,
+                isAutoOpacity,
+                isScrollbarAlignTop,
                 persist,
                 targetSelector,
                 option,
                 images,
+                scrollbarHeightPercent,
                 
                 AddIcon,
                 RemoveIcon,
                 ResetScrollbar,
+                GetColor,
+                GetColor2,
                 
                 PaintHtml,
                 PaintApp,
@@ -159,20 +259,31 @@
                 HandleRepainted,
                 HandleActive,
                 HandleInActive,
+
+                DecrementScrollbarHeight,
+                IncrementScrollbarHeight,
+                GetSCrollbarStyle,
             }
         }        
     })
 </script>
 
 <style lang="scss">
+    html{
+        overflow-x: initial;
+        overflow-y: initial;
+    }
+
     body{
+        overflow-x: initial;
+        overflow-y: initial;
+
         &::-webkit-scrollbar
         {
             width: 0px;
-            height: 0px;
             background-color: #eaeaea;
         }
-    
+
         &::-webkit-scrollbar-thumb
         {
             border-radius: 10px;
@@ -184,11 +295,13 @@
             }
         }
 
-        &.show-scrollbar::-webkit-scrollbar
-        {
+        &.show-scrollbar::-webkit-scrollbar{
             width: 14px;
-            height: 12px;
         }
+    }
+
+    .toast-notification{
+        margin-right: 200px;
     }
 
     #app {
@@ -200,29 +313,36 @@
     }
 
     .head{
-        position: sticky;
-        top: 0;
+        height: 40px;
+        width: 100%;
+        background: #B2DFDB;
+        margin-bottom: 20px;
+    }
 
-        .btns{
-            width: 100%;
-            height: 88px;
-            background: #41b883;
+    .tool-bar{
+        position: fixed;
+        top: 60px;
+        left: 60px;
+        width: 400px;
+        border-radius: 15px !important;
+
+        .text-center{
             display: flex;
-            flex-direction: column;
             justify-content: center;
-            align-items: center;
+        }
 
-            & > div{
-                margin: 2px;
-            }
+        .v-btn{
+            text-transform: capitalize;
+            margin-bottom: 10px;
         }
     }
 
-    .row{
+    .images .row{
         display: flex;
         flex-direction: row;
         justify-content: center;
         align-items: center;
+        width: 100%;
 
         h1{
             margin-left: 50px;
