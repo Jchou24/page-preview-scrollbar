@@ -55,6 +55,10 @@
                 type: Boolean,
                 default: true
             },
+            isAutoOpacity:{
+                type: Boolean,
+                default: true
+            },
             persist:{
                 type: Boolean,
                 default: true
@@ -100,7 +104,9 @@
             const GetStyle = computed( () => `z-index: ${props.zIndex};`)
 
             const GetClass = computed( () => ({
-                active: isActive.value === false ? false : isHover.value,
+                active: props.isAutoOpacity ?
+                    isActive.value === false ? false : isHover.value
+                    : true
             }))
 
             const ResetPreviewer = () => (refs.Previewer as IPagePreviewScrollbarMethods)?.Reset();

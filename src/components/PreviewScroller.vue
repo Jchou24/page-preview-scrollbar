@@ -5,8 +5,6 @@
         <div class="mask-bottom" :style="heightBottom" />
         <div class="cover" 
             @mousedown.prevent="HandleMouseDown"
-            @mouseup.prevent="HandleMouseUp"            
-            @mousemove="HandleMouseMove"
         />
     </div>
 </template>
@@ -71,14 +69,6 @@
                 heightBottom.value = `height: ${heightMaskBoottom}px;`
             }
 
-            onMounted( () => {
-                Init()
-
-                $(window).on('scroll', SetScrollTop)
-            })
-
-            const Reset = Init
-
             // =================================================================
             const isDrag = ref(false)
 
@@ -113,6 +103,17 @@
 
                 Scroll(event)
             }
+            // =================================================================
+
+            onMounted( () => {
+                Init()
+
+                $(window).on('scroll', SetScrollTop)
+                $(window).on('mouseup', HandleMouseUp)
+                $(window).on('mousemove', HandleMouseMove)
+            })
+
+            const Reset = Init
 
             return {
                 heightTop,
@@ -130,6 +131,7 @@
 <style lang="scss">
     .PreviewScroller{
         position: relative;
+        overflow: hidden;
         $mask-background: rgba(189, 189, 189, 0.5);
 
         .mask-top{
@@ -150,8 +152,6 @@
             position: absolute;
             top: 0;
             left: 0;
-
-            // background: black;
         }
     }
 </style>
