@@ -9,8 +9,10 @@
 </template>
 
 <script>    
+    import { computed, defineComponent } from '@vue/composition-api'
 
-    import { computed, defineComponent } from '@vue/composition-api'    
+    import 'animate.css/animate.min.css'
+    
     export default defineComponent({
         name: "SimpleTransition",
         props:{

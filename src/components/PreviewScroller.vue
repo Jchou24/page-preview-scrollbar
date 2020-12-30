@@ -12,7 +12,7 @@
 </template>
 
 <script lang="ts">
-    import { computed, defineComponent, onMounted, ref } from '@vue/composition-api'
+    import { defineComponent, onMounted, ref } from '@vue/composition-api'
     
     import { useWindowSize } from '@u3u/vue-hooks'
 
@@ -30,27 +30,41 @@
                 type: Number,
                 default: 25,
             },
+            targetSelector:{
+                type: String,
+                default: "html"
+            },
+            containerClass:{
+                type: String,
+                default: "PagePreviewScrollbar"
+            },
         },
         setup( props ){
             const { height } = useWindowSize()
-            const previewHeight = computed( () => height.value )
+
             const scrollTop = ref(0)
             const containerHeight = ref(0)
+            const previewHeight = ref(0)
 
             const SetScrollTop = () => scrollTop.value = $(window).scrollTop() || 0
-            const SetContainerHeight = () => containerHeight.value = $("html").height() || 0
+            const SetContainerHeight = () => containerHeight.value = $(props.targetSelector).height() || 0
+            const SetPreviewHeight = () => previewHeight.value = document.querySelector(`.${props.containerClass}`)?.clientHeight || 0 
+
             const heightTop = ref('')
             const heightCenter = ref('')
             const heightBottom = ref('')
+            let heightMaskTop = 0
+            let heightMaskCenter = 0
+            let heightMaskBoottom = 0
 
             const Init = () => {
                 SetScrollTop()
                 SetContainerHeight()
+                SetPreviewHeight()
 
-                const ratio = previewHeight.value / containerHeight.value
-                const heightMaskTop = ( scrollTop.value - 0.0 ) * ratio
-                const heightMaskCenter = ( previewHeight.value ) * ratio
-                const heightMaskBoottom = previewHeight.value - heightMaskTop - heightMaskCenter
+                heightMaskTop = ( scrollTop.value - 0.0 ) * ( previewHeight.value / containerHeight.value )
+                heightMaskCenter = ( height.value ) * ( previewHeight.value / containerHeight.value )
+                heightMaskBoottom = previewHeight.value - heightMaskTop - heightMaskCenter
 
                 heightTop.value = `height: ${heightMaskTop}px;`
                 heightCenter.value = `height: ${heightMaskCenter}px;`
@@ -60,14 +74,10 @@
             onMounted( () => {
                 Init()
 
-                $(window).on('scroll', () => {
-                    SetScrollTop()
-                })
+                $(window).on('scroll', SetScrollTop)
             })
 
-            function Reset(){
-                Init()
-            }
+            const Reset = Init
 
             // =================================================================
             const isDrag = ref(false)
@@ -78,14 +88,17 @@
             }, props.throttle)
 
             function Scroll(event: MouseMove){
-                top = (event.clientY / previewHeight.value) * containerHeight.value
-                // console.log(event.clientY, height.value, top)
+                const offsetCenter = heightMaskCenter / 2.0
+                const containerTop = document.querySelector(`.${props.containerClass}`)?.getBoundingClientRect().top || 0
+                let distanceToTop = event.clientY - containerTop
+                distanceToTop = distanceToTop < 0 ? 0 : distanceToTop
+                distanceToTop = distanceToTop > previewHeight.value ? previewHeight.value : distanceToTop
+                top = ( ((distanceToTop - offsetCenter) / previewHeight.value) * containerHeight.value )
                 ScrollWindow()
             }
 
             function HandleMouseDown(event: MouseMove){
                 isDrag.value = true
-
                 Scroll(event)
             }
 

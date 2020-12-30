@@ -7,6 +7,8 @@
 <script>
     import { defineComponent } from '@vue/composition-api'
 
+    import 'material-design-icons/iconfont/material-icons.css'
+
     export default defineComponent({
         name: "CloseButton",
     })

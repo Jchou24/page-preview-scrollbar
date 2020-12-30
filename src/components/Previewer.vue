@@ -3,9 +3,9 @@
 </template>
 
 <script lang="ts">
-    import { defineComponent, onMounted } from '@vue/composition-api'
+    import { computed, defineComponent, watch } from '@vue/composition-api'
 
-    import html2canvas from 'html2canvas'
+    import * as htmlToImage from 'html-to-image'
 
     export default defineComponent({
         name: 'Previewer',
@@ -14,15 +14,50 @@
                 type: String,
                 default: "Previewer"
             },
-            targetElement:{
+            targetSelector:{
                 type: String,
                 default: "html"
             },
+            paintOption:{
+                type: Object as () => htmlToImage.Options,
+                default: () => ({})
+            },
+            containerClass:{
+                type: String,
+                default: "PagePreviewScrollbar"
+            },
         },
-        setup( props ){
+        setup( props, { emit } ){
+
+            const option = computed( () => {
+                const filter = (element: HTMLElement) => {
+                    const isNoScript = element.tagName?.toLowerCase() === "noscript"
+                    if( isNoScript === true ){
+                        return false
+                    }
+
+                    const isScrollbar = element.classList?.contains(props.containerClass)
+                    return (isScrollbar === false || isScrollbar === true) ? !isScrollbar : true
+                }
+
+                const mixedFilter = (element: HTMLElement) => {
+                    const optionFilter = props.paintOption.filter
+                    if( optionFilter ){
+                        return optionFilter(element) && filter(element)
+                    }else{
+                        return filter(element)
+                    }
+                }   
+
+                return {
+                    ...props.paintOption,
+                    filter: mixedFilter,
+                } as htmlToImage.Options
+            })
+
             const Init = () => {
                 // console.log("Init")
-                const target = document.querySelector(props.targetElement) as HTMLElement
+                const target = document.querySelector(props.targetSelector) as HTMLElement
                 const previewer = document.getElementById(props.previewerId)
 
                 // console.log(target, previewer)
@@ -32,17 +67,52 @@
                 }
 
                 // console.log("Paint")
-                html2canvas(target).then(canvas => {
-                    const children = previewer.children
-                    if( children.length > 0){
-                        previewer.innerHTML = ""
-                    }
 
-                    previewer.appendChild(canvas)
-                })
+                // htmlToImage.toCanvas(target)
+                //     .then(function (canvas) {
+
+                //         const children = previewer.children
+                //         if( children.length > 0){
+                //             previewer.innerHTML = ""
+                //         }
+
+                //         previewer.appendChild(canvas)
+
+                //         emit("repainted")
+                //     })
+
+                // htmlToImage.toPng(target)
+                //     .then(function (dataUrl) {
+                //         const img = new Image();
+                //         img.src = dataUrl;
+
+                //         const children = previewer.children
+                //         if( children.length > 0){
+                //             previewer.innerHTML = ""
+                //         }
+
+                //         previewer.appendChild(img)
+
+                //         emit("repainted")
+                //     })                
+
+                htmlToImage.toSvg(target, option.value)
+                    .then(function (dataUrl) {
+                        const img = new Image();
+                        img.src = dataUrl;
+
+                        const children = previewer.children
+                        if( children.length > 0){
+                            previewer.innerHTML = ""
+                        }
+
+                        previewer.appendChild(img)
+
+                        emit("repainted")
+                    })
             }
 
-            onMounted(Init)            
+            watch( () => props.targetSelector, Init )
 
             function Reset(){
                 Init()
@@ -61,9 +131,14 @@
         width: 100%;
         height: 100%;
 
-        canvas{
-            width: 100% !important;
-            height: 100% !important;
+        // canvas{
+        //     width: 100% !important;
+        //     height: 100% !important;
+        // }
+
+        img{
+            width: 100%;
+            height: 100%;
         }
     }
 </style>

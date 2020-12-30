@@ -1,5 +1,5 @@
 <template>
-    <div class="PagePreviewScrollbar" :style="GetStyle" :class="GetClass" data-html2canvas-ignore
+    <div class="PagePreviewScrollbar" :style="GetStyle" :class="GetClass"
         @mouseenter="HandleMouseEnter"
         @mouseleave="HandleMouseLeave"
         >
@@ -7,15 +7,21 @@
             <div class="page-preview-scroll-bar" v-show="isActive">
                 <div class="top-block" />
 
-                <Previewer class="Previewer"
+                <Previewer class="Previewer" containerClass="PagePreviewScrollbar"
                     :previewerId="previewerId"
-                    targetElement="html"
+                    :targetSelector="targetSelector"
+                    :paintOption="paintOption"
+
+                    @repainted="emit('repainted')"
                     ref="Previewer"
                     />
 
-                <PreviewScroller class="preview-scroller" :throttle="throttle" ref="PreviewScroller" />
+                <PreviewScroller class="preview-scroller" containerClass="PagePreviewScrollbar"
+                    :throttle="throttle" 
+                    :targetSelector="targetSelector"
+                    ref="PreviewScroller" />
 
-                <CloseButton class="close-btn-top" @click.native="HandleClose" />
+                <CloseButton class="close-btn-top" @click.native="HandleClose" v-if="isShowCloseButton" />
                 <!-- <CloseButton class="close-btn-bottom" @click.native="HandleClose" /> -->
             </div>
         </SimpleTransition>
@@ -23,7 +29,7 @@
 </template>
 
 <script lang="ts">
-    import { computed, defineComponent, onBeforeUnmount, onMounted, ref, watch } from '@vue/composition-api'
+    import { computed, defineComponent, nextTick, onMounted, onUpdated, ref, watch } from '@vue/composition-api'
 
     import CloseButton from './CloseButton.vue'
     import SimpleTransition from './SimpleTransition.vue'
@@ -34,7 +40,9 @@
     import ResizeObserver from 'resize-observer-polyfill'
     import { IPagePreviewScrollbarMethods } from '@/types'
     import throttle from 'lodash.throttle'
+    import debounce from 'lodash.debounce'
     import { useWindowSize } from '@u3u/vue-hooks'
+    import * as htmlToImage from 'html-to-image'
 
     export default defineComponent({
         name: 'PagePreviewScrollbar',
@@ -43,26 +51,39 @@
                 type: Boolean,
                 default: true
             },
-            persist:{
+            isShowCloseButton:{
                 type: Boolean,
                 default: true
             },
-            previewerId:{
-                type: String,
-                default: "Previewer"
-            },
-            // targetElement:{
-            //     type: String,
-            //     default: "html"
-            // },
-            throttle:{
-                type: Number,
-                default: 25,
+            persist:{
+                type: Boolean,
+                default: true
             },
             zIndex:{
                 type: Number,
                 default: 100,
             },
+
+            previewerId:{
+                type: String,
+                default: "Previewer"
+            },
+            targetSelector:{
+                type: String,
+                default: "html"
+            },
+            throttle:{
+                type: Number,
+                default: 25,
+            },
+            debounceRepaint:{
+                type: Number,
+                default: 500,
+            },
+            paintOption:{
+                type: Object as () => htmlToImage.Options,
+                default: () => ({})
+            },            
         },
         components:{
             CloseButton,
@@ -70,7 +91,7 @@
             Previewer,
             PreviewScroller,
         },
-        setup( props, { refs } ){
+        setup( props, { emit, refs } ){
             const { width, height } = useWindowSize()
 
             const isActive = ref(props.persist)
@@ -79,54 +100,81 @@
             const GetStyle = computed( () => `z-index: ${props.zIndex};`)
 
             const GetClass = computed( () => ({
-                active: isHover.value,
+                active: isActive.value === false ? false : isHover.value,
             }))
 
-            const Reset = throttle( () => {
-                (refs.Previewer as IPagePreviewScrollbarMethods)?.Reset();
-                (refs.PreviewScroller as IPagePreviewScrollbarMethods)?.Reset();
+            const ResetPreviewer = () => (refs.Previewer as IPagePreviewScrollbarMethods)?.Reset();
+            const ResetPreviewScroller = () => (refs.PreviewScroller as IPagePreviewScrollbarMethods)?.Reset();
 
-            }, props.throttle )
+            const DebounceResetPreviewer = debounce( ResetPreviewer, props.debounceRepaint )
+            const ThrottleResetPreviewScroller = throttle( ResetPreviewScroller, props.throttle )
 
 
+            const Reset = () => {
+                DebounceResetPreviewer()
+                ThrottleResetPreviewScroller()
+            }
+
+            watch( isActive, () => {
+                if (isActive.value) {
+                    emit("active")
+                } else {
+                    emit("inactive")                    
+                }
+            })
             // =================================================================
             // handle height change        
             const containerHeight = ref(0)
-            const SetContainerHeight = () => containerHeight.value = $("html").height() || 0
+            const SetContainerHeight = () => containerHeight.value = $(props.targetSelector).height() || 0
+            // =================================================================
 
             function ShouldActive(){
                 SetContainerHeight()
                 if (!props.isHideShorterHeight) {
-                    Reset()
                     return true
                 }
 
                 if (containerHeight.value <= height.value * 1.5) {
                     return false
                 }else{
-                    Reset()
                     return true
                 }
             }
 
-            function HandleHeightChange() {
-                // console.log("height change")
-                // console.log(ShouldActive()) 
+            let isUpdated = false
+            function HandleResize() {
+                // console.log("Resize change")
+                // console.log(ShouldActive())
+
+                if (!isUpdated) {
+                    return
+                }
+
+                Reset()
                 isActive.value = ShouldActive()
             }
+            onUpdated( () => isUpdated = true)
 
-            onMounted( () => {
-                const resizeObserver = new ResizeObserver(HandleHeightChange);
-                const target = document.querySelector('html')
+            function InitResizeObserver() {
+                const resizeObserver = new ResizeObserver(throttle(HandleResize, props.throttle));
+                const target = document.querySelector(props.targetSelector)
                 if (!target) {
                     return
                 }
                 resizeObserver.observe(target)
+            }
+
+            onMounted( () => {
+                ResetPreviewScroller()
+                InitResizeObserver()
+
+                nextTick(Reset)
+
+                $(window).on('scroll', throttle( ResetPreviewScroller, props.throttle) )
             })
-            watch( height, HandleHeightChange)
             // =================================================================
             watch( () => props.persist, () => isActive.value = props.persist )
-            watch( () => props.isHideShorterHeight, HandleHeightChange )
+            watch( () => props.isHideShorterHeight, HandleResize )
             // =================================================================
             function HandleMouseEnter(){
                 isHover.value = true
@@ -154,24 +202,11 @@
             function HandleClose() {
                 isActive.value = false
             }            
-            // =================================================================
-            onMounted( () => {
-                Reset()
-
-                $(window).on('scroll', Reset)
-                // document.addEventListener('scroll', Reset)
-            })
-
-            onBeforeUnmount( () => {
-                // document.removeEventListener('scroll', Reset)
-            })
-
-            watch( width, () => {
-                Reset()
-            })            
+            // =================================================================                    
 
             return {
                 isActive,
+                emit,
                 GetStyle,
                 GetClass,
                 Reset,
@@ -191,7 +226,7 @@
         width: 200px;
         height: 100vh;
 
-        &.active{
+        &.active .page-preview-scroll-bar{
             opacity: 1.0;
             background: white;
         }
