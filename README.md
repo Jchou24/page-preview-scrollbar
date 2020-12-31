@@ -1,6 +1,6 @@
 # [Page Preview Scrollbar](https://github.com/Jchou24/page-preview-scrollbar)
 
-A scrollbar with current page preview.
+A scrollbar with current page preview .
 
 [Demo](https://jchou24.github.io/Demos/PagePreviewScrollbar/index.html)
 
