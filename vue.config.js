@@ -1,5 +1,5 @@
 
-configureWebpack = {
+const configureWebpack = {
     externals: {
         "@vue/composition-api": "@vue/composition-api",
     }
