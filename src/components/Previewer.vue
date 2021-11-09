@@ -1,11 +1,11 @@
 <template>
-    <div :id="previewerId" class="Previewer" />
+    <div :id="previewerId" class="Previewer" >
+        <div class="previewer-content" ref="Previewer"></div>
+    </div>
 </template>
 
 <script lang="ts">
-    import { computed, defineComponent, watch } from '@vue/composition-api'
-
-    import * as htmlToImage from 'html-to-image'
+    import { defineComponent, onBeforeUnmount, onMounted, ref, watch } from '@vue/composition-api'
 
     export default defineComponent({
         name: 'Previewer',
@@ -14,132 +14,113 @@
                 type: String,
                 default: "Previewer"
             },
-            targetSelector:{
-                type: String,
-                default: "html"
-            },
-            paintOption:{
-                type: Object as () => htmlToImage.Options,
-                default: () => ({})
-            },
             containerClass:{
                 type: String,
                 default: "PagePreviewScrollbar"
             },
+            elementToRmoveSelectors:{
+                type: Array as () => Array<string>,
+                default: () => [],
+            },
         },
-        setup( props, { emit } ){
+        setup( props, { emit, refs } ){
+            const GetPreviewer = () => refs.Previewer as HTMLElement
+            const GetPreviewerContent = () => {
+                const previewerContent = document.createElement('iframe') as HTMLIFrameElement
+                previewerContent.className += 'previewer-iframe';
+                previewerContent.style.transformOrigin = '0 0';
+                return previewerContent
+            }
+            const GetIframeHtml = () => {
+                const elementToRmoveSelectors = props.elementToRmoveSelectors.includes(`.${props.containerClass}`) ? props.elementToRmoveSelectors : [`.${props.containerClass}`, ...props.elementToRmoveSelectors]
+                const elementToRmoveString = elementToRmoveSelectors.map( x => `"${x}"` ).join(",")
+                let html = document.documentElement.outerHTML
+                    .replace(/<script([\s\S]*?)>([\s\S]*?)<\/script>/gim, '');// Remove all scripts
+                const script = `<script>
+                const elementToRmove = [${elementToRmoveString}];
+                for(var i = 0; i < elementToRmove.length; i++){
 
-            const option = computed( () => {
-                const filter = (element: HTMLElement) => {
-                    const isNoScript = element.tagName?.toLowerCase() === "noscript"
-                    if( isNoScript === true ){
-                        return false
+                    var target = document.querySelectorAll(elementToRmove[i]);
+                    for(var j = 0; j < target.length; j++){
+                        target[j].parentNode.removeChild(target[j]);
                     }
+                }             
+                <`+`/script>`;
+                html = html.replace('</body>',script + '</body>');
+                return html
+            }
 
-                    const isScrollbar = element.classList?.contains(props.containerClass)
-                    return (isScrollbar === false || isScrollbar === true) ? !isScrollbar : true
-                }
+            const previewerContent = ref( GetPreviewerContent() )
 
-                const mixedFilter = (element: HTMLElement) => {
-                    const optionFilter = props.paintOption.filter
-                    if( optionFilter ){
-                        return optionFilter(element) && filter(element)
-                    }else{
-                        return filter(element)
-                    }
-                }   
+            function SetDimensions() {
+                const previewer = GetPreviewer()
+                const realScaleWidth = previewer.clientWidth / document.body.clientWidth;
+                const realScaleHeight = previewer.clientHeight / document.body.clientHeight;
+                
+                previewerContent.value.style.transform = `scale( ${realScaleWidth}, ${realScaleHeight} )`;
+                previewerContent.value.style.width = (100 / realScaleWidth) + '%';
+                previewerContent.value.style.height = (100 / realScaleHeight) + '%';
+            }
 
-                return {
-                    cacheBust: true,
-                    ...props.paintOption,
-                    filter: mixedFilter,
-                } as htmlToImage.Options
-            })
+            const InitEventListener = () => {
+                window.addEventListener('resize', SetDimensions);
+                window.addEventListener('load', SetDimensions);                
+            }
+
+            const RemoveEventListener = () => {
+                window.removeEventListener('resize', SetDimensions);
+                window.removeEventListener('load', SetDimensions);
+            }
 
             const Init = () => {
-                // console.log("Init")
-                const target = document.querySelector(props.targetSelector) as HTMLElement
-                const previewer = document.getElementById(props.previewerId)
+                previewerContent.value = GetPreviewerContent()
+                const previewer = GetPreviewer()
+                previewer.innerHTML = ""
+                previewer.appendChild(previewerContent.value);
 
-                // console.log(target, previewer)
-
-                if (!target || !previewer) {
-                    return
-                }
-
-                // console.log("Paint")
-
-                // htmlToImage.toCanvas(target)
-                //     .then(function (canvas) {
-
-                //         const children = previewer.children
-                //         if( children.length > 0){
-                //             previewer.innerHTML = ""
-                //         }
-
-                //         previewer.appendChild(canvas)
-
-                //         emit("repainted")
-                //     })
-
-                // htmlToImage.toPng(target)
-                //     .then(function (dataUrl) {
-                //         const img = new Image();
-                //         img.src = dataUrl;
-
-                //         const children = previewer.children
-                //         if( children.length > 0){
-                //             previewer.innerHTML = ""
-                //         }
-
-                //         previewer.appendChild(img)
-
-                //         emit("repainted")
-                //     })                
-
-                htmlToImage.toSvg(target, option.value)
-                    .then(function (dataUrl) {
-                        const img = new Image();
-                        img.src = dataUrl;
-
-                        const children = previewer.children
-                        if( children.length > 0){
-                            previewer.innerHTML = ""
-                        }
-
-                        previewer.appendChild(img)
-
-                        emit("repainted")
-                    })
+                const iframeDoc = (previewerContent.value.contentWindow as Window)?.document;
+                const html = GetIframeHtml()
+                
+                iframeDoc.open();
+                iframeDoc.write("");
+                iframeDoc.write(html);
+                iframeDoc.close();
+                
+                SetDimensions();
+                RemoveEventListener()
+                InitEventListener()
+                emit("repainted")
             }
 
-            watch( () => props.targetSelector, Init )
-
-            function Reset(){
-                Init()
-            }
+            onMounted(Init)
+            onBeforeUnmount(RemoveEventListener)
+            watch( () => props.elementToRmoveSelectors, Init )
 
             return {
-                Reset,
+                Reset: Init,
             }
-        }        
+        }
     })
 </script>
 
 <style lang="scss">
     .Previewer{
-        background: whitesmoke;
         width: 100%;
         height: 100%;
 
-        // canvas{
-        //     width: 100% !important;
-        //     height: 100% !important;
-        // }
-
-        img{
+        .previewer-content{
             width: 100%;
             height: 100%;
+        }
+
+        .previewer-iframe{ 
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            transform-origin: 0 0;
         }
     }
 </style>

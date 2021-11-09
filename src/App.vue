@@ -38,6 +38,9 @@
                         <v-btn block rounded :color="GetColor(isAutoOpacity)" @click="isAutoOpacity = !isAutoOpacity">
                             Toggle isAutoOpacity <v-spacer /> {{isAutoOpacity}}
                         </v-btn>
+                        <v-btn block rounded :color="GetColor(isResizeAutoRepaint)" @click="isResizeAutoRepaint = !isResizeAutoRepaint">
+                            Toggle isResizeAutoRepaint <v-spacer /> {{isResizeAutoRepaint}}
+                        </v-btn>
                         <v-btn block rounded :color="GetColor(disableRepaint)" @click="disableRepaint = !disableRepaint">
                             Toggle disableRepaint <v-spacer /> {{disableRepaint}}
                         </v-btn>
@@ -124,10 +127,11 @@
             :isShowCloseButton="isShowCloseButton"
             :isHideShorterHeight="isHideShorterHeight"
             :isAutoOpacity="isAutoOpacity"
+            :isResizeAutoRepaint="isResizeAutoRepaint"
             :disableRepaint="disableRepaint"
             :persist="persist" 
             :targetSelector="targetSelector"
-            :paintOption="option"
+            :elementToRmoveSelectors="elementToRmoveSelectors"
 
             @repainted="HandleRepainted"
             @active="HandleActive"
@@ -143,7 +147,6 @@
     import PagePreviewScrollbar from './components/PagePreviewScrollbar.vue'
 
     import { IPagePreviewScrollbarMethods } from './types'
-    import * as htmlToImage from 'html-to-image'
     import { useWindowSize } from '@u3u/vue-hooks'
     import debounce from 'lodash.debounce'
     import { provideToast, useToast } from "vue-toastification/composition";
@@ -165,7 +168,6 @@
             const toast = useToast()
             const { width, height } = useWindowSize()
             
-            const option = ref({} as htmlToImage.Options)
             const images = ref(new Array(15).fill(0))
             const AddIcon = () => images.value.push(0)
             const RemoveIcon = () => images.value.pop()
@@ -174,9 +176,11 @@
             const isHideShorterHeight = ref(true)
             const isShowCloseButton = ref(true)
             const isAutoOpacity = ref(true)
+            const isResizeAutoRepaint = ref(false)
             const disableRepaint = ref(false)
             const persist = ref(true)
             const targetSelector = ref("html")
+            const elementToRmoveSelectors = ref([] as Array<string>)
 
             watch( isShowBrowserScrollbar, () => {
                 const html = document.querySelector("body")
@@ -201,14 +205,17 @@
             
             function PaintHtml(){
                 targetSelector.value = 'html'
+                elementToRmoveSelectors.value = []
             }
 
             function PaintApp(){
                 targetSelector.value = '#app'
+                elementToRmoveSelectors.value = [".Vue-Toastification__container"]
             }
 
             function PaintImage(){
                 targetSelector.value = '.images'
+                elementToRmoveSelectors.value = [ ".Vue-Toastification__container", ".tool-bar", ".head", ".GitHubCorner" ]
             }
 
             function HandleRepainted(){
@@ -244,11 +251,12 @@
                 isShowCloseButton,
                 isShowBrowserScrollbar,
                 isAutoOpacity,
+                isResizeAutoRepaint,
                 disableRepaint,
                 isScrollbarAlignTop,
                 persist,
                 targetSelector,
-                option,
+                elementToRmoveSelectors,
                 images,
                 scrollbarHeightPercent,
                 

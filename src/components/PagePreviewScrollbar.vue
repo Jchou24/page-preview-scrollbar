@@ -9,8 +9,7 @@
 
                 <Previewer class="Previewer" containerClass="PagePreviewScrollbar"
                     :previewerId="previewerId"
-                    :targetSelector="targetSelector"
-                    :paintOption="paintOption"
+                    :elementToRmoveSelectors="elementToRmoveSelectors"
 
                     @repainted="emit('repainted')"
                     ref="Previewer"
@@ -29,7 +28,7 @@
 </template>
 
 <script lang="ts">
-    import { computed, defineComponent, nextTick, onMounted, onUpdated, ref, watch } from '@vue/composition-api'
+    import { computed, defineComponent, nextTick, onMounted, ref, watch } from '@vue/composition-api'
 
     import CloseButton from './CloseButton.vue'
     import SimpleTransition from './SimpleTransition.vue'
@@ -42,7 +41,6 @@
     import throttle from 'lodash.throttle'
     import debounce from 'lodash.debounce'
     import { useWindowSize } from '@u3u/vue-hooks'
-    import * as htmlToImage from 'html-to-image'
 
     export default defineComponent({
         name: 'PagePreviewScrollbar',
@@ -58,6 +56,10 @@
             isAutoOpacity:{
                 type: Boolean,
                 default: true
+            },
+            isResizeAutoRepaint:{
+                type: Boolean,
+                default: false
             },
             persist:{
                 type: Boolean,
@@ -86,12 +88,12 @@
             },
             debounceRepaint:{
                 type: Number,
-                default: 1000,
+                default: 300,
             },
-            paintOption:{
-                type: Object as () => htmlToImage.Options,
-                default: () => ({})
-            },            
+            elementToRmoveSelectors:{
+                type: Array as () => Array<string>,
+                default: () => [],
+            },         
         },
         components:{
             CloseButton,
@@ -106,7 +108,6 @@
             const isHover = ref(false)
 
             const GetStyle = computed( () => `z-index: ${props.zIndex};`)
-
             const GetClass = computed( () => ({
                 active: props.isAutoOpacity ?
                     isActive.value === false ? false : isHover.value
@@ -164,6 +165,9 @@
 
             const isUpdated = ref(false)
             function HandleResize() {
+                if(!props.isResizeAutoRepaint){
+                    return
+                }
                 // console.log("Resize change", isUpdated.value)
                 // console.log(ShouldActive())
 
@@ -190,7 +194,7 @@
                 ResetPreviewScroller()
                 InitResizeObserver()
 
-                nextTick(Reset)
+                // nextTick(Reset)
                 // nextTick(InitResizeObserver)
 
                 $(window).on('scroll', ThrottleResetPreviewScroller )
@@ -252,13 +256,13 @@
 
         &.active .page-preview-scroll-bar{
             opacity: 1.0;
-            background: white;
         }
 
         .page-preview-scroll-bar{
             position: relative;
             border-left: 3px solid whitesmoke;
             opacity: 0.6;
+            transition: opacity 0.3s;
 
             width: 100%;
             height: 100%;
@@ -282,7 +286,6 @@
 
                 width: 100%;
                 height: 100%;
-
             }
         }        
     }
