@@ -18,6 +18,10 @@
                 type: String,
                 default: "PagePreviewScrollbar"
             },
+            iframeHtmlClass:{
+                type: String,
+                default: "PagePreviewScrollbar-iframe"
+            },
             elementToRmoveSelectors:{
                 type: Array as () => Array<string>,
                 default: () => [],
@@ -44,7 +48,8 @@
                         for(var j = 0; j < target.length; j++){
                             target[j].parentNode.removeChild(target[j]);
                         }
-                    }             
+                    }
+                    document.body.classList.add("${props.iframeHtmlClass}")
                     <`+`/script>`;
                 html = html.replace('</body>',script + '</body>');
                 return html
