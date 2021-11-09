@@ -37,22 +37,22 @@
                 let html = document.documentElement.outerHTML
                     .replace(/<script([\s\S]*?)>([\s\S]*?)<\/script>/gim, '');// Remove all scripts
                 const script = `<script>
-                const elementToRmove = [${elementToRmoveString}];
-                for(var i = 0; i < elementToRmove.length; i++){
+                    const elementToRmove = [${elementToRmoveString}];
+                    for(var i = 0; i < elementToRmove.length; i++){
 
-                    var target = document.querySelectorAll(elementToRmove[i]);
-                    for(var j = 0; j < target.length; j++){
-                        target[j].parentNode.removeChild(target[j]);
-                    }
-                }             
-                <`+`/script>`;
+                        var target = document.querySelectorAll(elementToRmove[i]);
+                        for(var j = 0; j < target.length; j++){
+                            target[j].parentNode.removeChild(target[j]);
+                        }
+                    }             
+                    <`+`/script>`;
                 html = html.replace('</body>',script + '</body>');
                 return html
             }
 
             const previewerContent = ref( GetPreviewerContent() )
 
-            function SetDimensions() {
+            const SetDimensions = () => {
                 const previewer = GetPreviewer()
                 const realScaleWidth = previewer.clientWidth / document.body.clientWidth;
                 const realScaleHeight = previewer.clientHeight / document.body.clientHeight;
