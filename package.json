@@ -1,6 +1,6 @@
 {
   "name": "jctk-page-preview-scrollbar",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "main": "dist/jctk-page-preview-scrollbar.common.js",
   "scripts": {
     "serve": "vue-cli-service serve",
