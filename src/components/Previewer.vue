@@ -18,6 +18,10 @@
                 type: String,
                 default: "PagePreviewScrollbar"
             },
+            targetSelector:{
+                type: String,
+                default: "html"
+            },
             iframeHtmlClass:{
                 type: String,
                 default: "PagePreviewScrollbar-iframe"
@@ -59,8 +63,9 @@
 
             const SetDimensions = () => {
                 const previewer = GetPreviewer()
-                const realScaleWidth = previewer.clientWidth / document.body.clientWidth;
-                const realScaleHeight = previewer.clientHeight / document.body.clientHeight;
+                const target = document.querySelector(props.targetSelector)
+                const realScaleWidth = previewer.clientWidth / (target as Element).getBoundingClientRect().width;
+                const realScaleHeight = previewer.clientHeight / (target as Element).getBoundingClientRect().height;
                 
                 previewerContent.value.style.transform = `scale( ${realScaleWidth}, ${realScaleHeight} )`;
                 previewerContent.value.style.width = (100 / realScaleWidth) + '%';

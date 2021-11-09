@@ -9,6 +9,7 @@
 
                 <Previewer class="Previewer" containerClass="PagePreviewScrollbar"
                     :previewerId="previewerId"
+                    :targetSelector="targetSelector"
                     :elementToRmoveSelectors="elementToRmoveSelectors"
 
                     @repainted="emit('repainted')"
