@@ -11,6 +11,7 @@
                     :previewerId="previewerId"
                     :targetSelector="targetSelector"
                     :elementToRmoveSelectors="elementToRmoveSelectors"
+                    :repaintAnimation="repaintAnimation"
 
                     @repainted="emit('repainted')"
                     ref="Previewer"
@@ -94,7 +95,11 @@
             elementToRmoveSelectors:{
                 type: Array as () => Array<string>,
                 default: () => [],
-            },         
+            },
+            repaintAnimation:{
+                type: Boolean,
+                default: true,
+            },
         },
         components:{
             CloseButton,

@@ -48,10 +48,11 @@ Property | Type | Default | Description
 isHideShorterHeight | Boolean | true | Automatically hide the scrollbar when screen is short.
 isShowCloseButton | Boolean | true | Display the buton which can close scrollbar.
 isAutoOpacity | Boolean | true | Make the scrollbar transparent.
-isResizeAutoRepaint | Boolean | false | Auto repain when sceen height or width resizes.
 persist | Boolean | true | Force the scrollbar always appeared/disappeared.
-zIndex | Number | 100 | css z-index.
+repaintAnimation | Boolean | true | Add transition animation when repaint.
+isResizeAutoRepaint | Boolean | false | Auto repain when sceen height or width resizes.
 disableRepaint | Boolean | false | Set true to avoid performance decreased by repainting.
+zIndex | Number | 100 | css z-index.
 targetSelector | String | "html" | The element used to preview.
 elementToRmoveSelectors | Array<String> | [] | The elements should not appear in scrollbar.
 throttle | Number | 25 |

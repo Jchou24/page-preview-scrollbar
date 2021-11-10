@@ -38,6 +38,9 @@
                         <v-btn block rounded :color="GetColor(isAutoOpacity)" @click="isAutoOpacity = !isAutoOpacity">
                             Toggle isAutoOpacity <v-spacer /> {{isAutoOpacity}}
                         </v-btn>
+                        <v-btn block rounded :color="GetColor(isRepaintAnimation)" @click="isRepaintAnimation = !isRepaintAnimation">
+                            Toggle repaintAnimation <v-spacer /> {{isRepaintAnimation}}
+                        </v-btn>
                         <v-btn block rounded :color="GetColor(isResizeAutoRepaint)" @click="isResizeAutoRepaint = !isResizeAutoRepaint">
                             Toggle isResizeAutoRepaint <v-spacer /> {{isResizeAutoRepaint}}
                         </v-btn>
@@ -67,6 +70,12 @@
                         </v-btn>
                         <v-btn class="px-8" rounded :color="GetColor2(targetSelector === '.images')" @click="PaintImage" >
                             .images
+                        </v-btn>
+                        <v-btn class="px-4" rounded :color="GetColor2(targetSelector === '.images .right')" @click="PaintImageRight" >
+                            .images .right
+                        </v-btn>
+                        <v-btn class="px-4 ml-6" rounded :color="GetColor2(targetSelector === '.images .right-rows')" @click="PaintImageRightRows" >
+                            .images .right-rows
                         </v-btn>
                     </v-row>
 
@@ -115,11 +124,19 @@
         </v-card>
 
 
-        <div class="images" >
-            <div class="row" v-for="(item, idx) in images"
-                :key="idx" >
-                <img alt="Vue logo" src="./assets/logo.png">
-                <h1> {{idx}} </h1>
+        <div class="images d-flex flex-row" >
+            <div class="left">V</div>
+            <div class="right d-flex flex-column justify-center">
+
+                <div class="right-vvv">VVV</div>
+                <div class="right-rows">
+                    <div class="row" v-for="(item, idx) in images"
+                        :key="idx" >
+                        <img alt="Vue logo" src="./assets/logo.png">
+                        <h1> {{idx}} </h1>
+                    </div>
+                </div>
+
             </div>
         </div>
         
@@ -132,6 +149,7 @@
             :persist="persist" 
             :targetSelector="targetSelector"
             :elementToRmoveSelectors="elementToRmoveSelectors"
+            :repaintAnimation="isRepaintAnimation"
 
             @repainted="HandleRepainted"
             @active="HandleActive"
@@ -169,13 +187,12 @@
             const { width, height } = useWindowSize()
             
             const images = ref(new Array(15).fill(0))
-            const AddIcon = () => images.value.push(0)
-            const RemoveIcon = () => images.value.pop()
 
             const isShowBrowserScrollbar = ref(false)
             const isHideShorterHeight = ref(true)
             const isShowCloseButton = ref(true)
             const isAutoOpacity = ref(true)
+            const isRepaintAnimation = ref(true)
             const isResizeAutoRepaint = ref(false)
             const disableRepaint = ref(false)
             const persist = ref(true)
@@ -202,20 +219,35 @@
             function ResetScrollbar(){
                 (refs.scrollbar as IPagePreviewScrollbarMethods)?.Reset();
             }
+
+            function AddIcon(){
+                images.value.push(0)
+                ResetScrollbar()
+            }
+
+            function RemoveIcon(){
+                images.value.pop()
+                ResetScrollbar()
+            }
             
             function PaintHtml(){
                 targetSelector.value = 'html'
-                elementToRmoveSelectors.value = []
             }
 
             function PaintApp(){
                 targetSelector.value = '#app'
-                elementToRmoveSelectors.value = [".Vue-Toastification__container"]
             }
 
             function PaintImage(){
                 targetSelector.value = '.images'
-                elementToRmoveSelectors.value = [ ".Vue-Toastification__container", ".tool-bar", ".head", ".GitHubCorner" ]
+            }
+
+            function PaintImageRight(){
+                targetSelector.value = '.images .right'
+            }
+
+            function PaintImageRightRows(){
+                targetSelector.value = '.images .right-rows'
             }
 
             function HandleRepainted(){
@@ -251,6 +283,7 @@
                 isShowCloseButton,
                 isShowBrowserScrollbar,
                 isAutoOpacity,
+                isRepaintAnimation,
                 isResizeAutoRepaint,
                 disableRepaint,
                 isScrollbarAlignTop,
@@ -269,6 +302,8 @@
                 PaintHtml,
                 PaintApp,
                 PaintImage,
+                PaintImageRight,
+                PaintImageRightRows,
 
                 HandleRepainted,
                 HandleActive,
@@ -372,22 +407,41 @@
         }
     }
 
-    .images .row{
-        display: flex;
-        flex-direction: row;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
+    .images{
+        .left{
+            width: 30%;
+            background: #B2DFDB;
+        }
+        .right{
+            width: 70%;
+            margin: 10px;
+            padding: 20px;
 
-        h1{
-            margin-left: 50px;
-            font-size: 100px;
+            .right-vvv{
+                width: 100%;
+                background: #B2DFDB;
+            }
+            .right-rows{
+                width: 100%;
+            }
+        }
+
+        .row{
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+    
+            h1{
+                margin-left: 50px;
+                font-size: 100px;
+            }
         }
     }
 
     .PagePreviewScrollbar{
         bottom: 0px;
         top: unset !important;
-        // height: calc( 100vh - 300px ) !important;
     }
 </style>
